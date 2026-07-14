@@ -42,6 +42,10 @@
   const DEFAULT_OBS_PRESET = "light";
   const OBS_TRANSPARENT = OBS_MODE && URL_PARAMS.get("transparent") !== "0";
   const OBS_INPUT_FETCH_TIMEOUT_MS = 2000;
+  // 埋め込みチャット用: ?input=postmessage で SSE の代わりに postMessage から音声レベルを受け取る。
+  const EMBED_INPUT_POSTMESSAGE = OBS_MODE && String(URL_PARAMS.get("input") || "").toLowerCase() === "postmessage";
+  const EMBED_CHARACTER_QUERY = OBS_MODE ? String(URL_PARAMS.get("character") || "").toLowerCase() : "";
+  const EMBED_PRESET_QUERY = String(URL_PARAMS.get("preset") || "").toLowerCase();
 
   const ASSETS = {
     backHair: "assets/demo-avatar/back-hair.png",
@@ -796,6 +800,7 @@
     angleY: 0,
     voiceRaw: 0,
     updatedAt: 0,
+    voiceUpdatedAt: 0,
     connected: false,
   };
   let obsEventSource = null;
@@ -1842,6 +1847,19 @@
 
   async function loadDefaultSettingsPayload() {
     return loadSettingsPayloadFromUrl(DEFAULT_SETTINGS_URL);
+  }
+
+  // OBS/埋め込みモード時のみ ?character= で初期キャラを切り替える（通常モードはキャラ管理が担当）。
+  function initialAvatarAssetMap() {
+    if (EMBED_CHARACTER_QUERY === "demo-avatar02") return DEMO_AVATAR02_ASSETS;
+    if (EMBED_CHARACTER_QUERY === "demo-avatar03") return DEMO_AVATAR03_ASSETS;
+    return ASSETS;
+  }
+
+  function initialAvatarSettingsUrl() {
+    if (EMBED_CHARACTER_QUERY === "demo-avatar02") return DEMO_AVATAR02_SETTINGS_URL;
+    if (EMBED_CHARACTER_QUERY === "demo-avatar03") return DEMO_AVATAR03_SETTINGS_URL;
+    return DEFAULT_SETTINGS_URL;
   }
 
   function loadPngImageFromU8(u8, name = "PNG") {
@@ -3023,7 +3041,7 @@
   }
 
   async function loadObsConfigIfAvailable() {
-    if (!OBS_MODE) return false;
+    if (!OBS_MODE || EMBED_INPUT_POSTMESSAGE) return false;
     try {
       const response = await fetch("/api/obs/config", { cache: "no-store" });
       if (!response.ok) return false;
@@ -3072,6 +3090,10 @@
     document.body.classList.toggle("obs-mode", OBS_MODE);
     if (!OBS_MODE) return;
     document.body.classList.add("dock-hidden");
+    if (EMBED_INPUT_POSTMESSAGE) {
+      // 埋め込みチャットは影付きの高品質プリセットを既定にする（?preset= で上書き可）。
+      obsPresetKey = OBS_PRESETS[EMBED_PRESET_QUERY] ? EMBED_PRESET_QUERY : "high";
+    }
     state.mouseFollowEnabled = false;
     state.showMesh = false;
     state.editMode = false;
@@ -6788,7 +6810,7 @@
   }
 
   function scheduleObsEventReconnect() {
-    if (!OBS_MODE || obsEventReconnectTimer) return;
+    if (!OBS_MODE || EMBED_INPUT_POSTMESSAGE || obsEventReconnectTimer) return;
     obsEventReconnectTimer = setTimeout(() => {
       obsEventReconnectTimer = null;
       connectObsEventSource();
@@ -6796,7 +6818,7 @@
   }
 
   function connectObsEventSource() {
-    if (!OBS_MODE || obsEventSource) return;
+    if (!OBS_MODE || EMBED_INPUT_POSTMESSAGE || obsEventSource) return;
     try {
       const eventUrl = obsLastEventId > 0 ? `/api/obs/events?lastEventId=${encodeURIComponent(String(obsLastEventId))}` : "/api/obs/events";
       const es = new EventSource(eventUrl);
@@ -6850,7 +6872,7 @@
   }
 
   function externalVoiceLevel(nowMs) {
-    const age = Math.max(0, nowMs - obsExternalInput.updatedAt);
+    const age = Math.max(0, nowMs - Math.max(obsExternalInput.updatedAt, obsExternalInput.voiceUpdatedAt));
     const decay = Math.exp(-age / 160);
     return obsExternalInput.voiceRaw * decay;
   }
@@ -6988,8 +7010,21 @@
     return true;
   }
 
+  // 埋め込みチャットモード: 親ページ(同一オリジン)から postMessage で音声レベルを受け取る。
+  function bindEmbedVoiceInput() {
+    if (!EMBED_INPUT_POSTMESSAGE) return;
+    window.addEventListener("message", (event) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data;
+      if (!data || typeof data !== "object" || data.type !== "purupuru-voice") return;
+      obsExternalInput.voiceRaw = clamp(Number(data.voiceRaw) || 0, 0, 2);
+      obsExternalInput.voiceUpdatedAt = performance.now();
+      obsExternalInput.connected = true;
+    });
+  }
+
   async function loadObsSnapshotIfAvailable() {
-    if (!OBS_MODE) return false;
+    if (!OBS_MODE || EMBED_INPUT_POSTMESSAGE) return false;
     try {
       const response = await fetch("/api/obs/snapshot", { cache: "no-store" });
       if (!response.ok) return false;
@@ -9164,7 +9199,7 @@
     setStatus("loading");
     const packageImageVersionAtStart = avatarPackageImageVersion;
     try {
-      const entries = Object.entries(ASSETS);
+      const entries = Object.entries(initialAvatarAssetMap());
       const results = await Promise.allSettled(
         entries.map(async ([key, src]) => [key, await loadImage(src)])
       );
@@ -9195,7 +9230,7 @@
       }
       applyLoadedAvatarImages(loadedImages);
       try {
-        await applyAllSettingsPayload(await loadDefaultSettingsPayload(), "デフォルト設定を読み込みました。");
+        await applyAllSettingsPayload(await loadSettingsPayloadFromUrl(initialAvatarSettingsUrl()), "デフォルト設定を読み込みました。");
       } catch (error) {
         console.warn("デフォルト設定の読み込みをスキップしました。", error);
         setEditStatus("デフォルト設定を読み込めなかったため、基本設定で起動しました。");
@@ -14311,6 +14346,7 @@
       setStatus("error");
       console.error("loadAssets failed", error);
     });
+  bindEmbedVoiceInput();
   connectObsEventSource();
   requestMainAnimationFrame();
 })();

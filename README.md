@@ -186,6 +186,12 @@ Bundled demo images, favicon, screenshots, thumbnails, and other visual assets a
 
 - [使い方 / Usage](./docs/usage.md)
 
+## AIチャット / Talk with Mira (AI chat companion)
+
+`chat.html` turns the avatar into an AI chat companion: the animated avatar (lipsync, blinking,
+hair physics) on the left and a chat panel on the right. Replies are generated via OpenRouter and
+spoken with ElevenLabs TTS, deployable on Vercel. See [docs/mira-chat.md](./docs/mira-chat.md).
+
 ## 開発者向け / Development checks
 
 ```bash
