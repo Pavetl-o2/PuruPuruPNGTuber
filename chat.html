@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Talk with Mira</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <main class="mira-app">
+    <section class="stage-panel" aria-label="Avatar">
+      <div class="sky" id="sky"></div>
+      <div class="moon" aria-hidden="true"></div>
+      <header class="stage-header">
+        <p class="eyebrow">Tonight's room</p>
+        <h1 class="stage-title">The Starling Observatory</h1>
+      </header>
+      <iframe
+        id="avatarFrame"
+        class="avatar-frame"
+        src="index.html?mode=obs&amp;input=postmessage&amp;character=demo-avatar03&amp;preset=high"
+        title="Avatar de Mira"
+        loading="eager"
+      ></iframe>
+      <div class="speaking-chip" id="speakingChip" hidden>
+        <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Mira está hablando</span>
+      </div>
+    </section>
+
+    <section class="chat-panel" aria-label="Chat">
+      <header class="chat-header">
+        <div>
+          <p class="eyebrow">Private frequency</p>
+          <h2 class="chat-title">Talk with Mira</h2>
+        </div>
+        <button id="resetButton" class="icon-button" type="button" title="Reiniciar conversación" aria-label="Reiniciar conversación">&#8635;</button>
+      </header>
+
+      <div class="messages" id="messages" aria-live="polite"></div>
+
+      <div class="composer-card">
+        <div class="composer-meta">
+          <div>
+            <h3 class="composer-title">Voz de Mira</h3>
+            <p class="composer-hint">Las respuestas se leen en voz alta con lipsync.</p>
+          </div>
+          <label class="voice-toggle">
+            <input type="checkbox" id="voiceToggle" checked>
+            <span class="voice-toggle-track" aria-hidden="true"></span>
+            <span class="voice-toggle-label">Voz</span>
+          </label>
+        </div>
+        <form class="composer" id="composerForm">
+          <input
+            id="messageInput"
+            class="message-input"
+            type="text"
+            placeholder="Escribe un mensaje…"
+            autocomplete="off"
+            maxlength="2000"
+          >
+          <button id="sendButton" class="send-button" type="submit" aria-label="Enviar">&#10148;</button>
+        </form>
+        <p class="status-line" id="statusLine" role="status"></p>
+        <p class="footnote">El audio solo se genera al responder. Tus API keys permanecen en el servidor.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="password-overlay" id="passwordOverlay" hidden>
+    <form class="password-card" id="passwordForm">
+      <h2 class="password-title">Acceso privado</h2>
+      <p class="password-hint">Esta instancia está protegida. Introduce la contraseña de acceso.</p>
+      <input id="passwordInput" class="message-input" type="password" placeholder="Contraseña" autocomplete="current-password">
+      <button class="send-button password-submit" type="submit">Entrar</button>
+      <p class="status-line" id="passwordStatus" role="status"></p>
+    </form>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>
