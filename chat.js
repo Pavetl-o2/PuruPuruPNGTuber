@@ -76,28 +76,19 @@
   }
 
   function addMessageBubble(role, text) {
-    const root = document.createElement("article");
+    const root = document.createElement("p");
     root.className = `msg ${role === "user" ? "user" : "mira"}`;
 
-    const avatar = document.createElement("span");
-    avatar.className = "msg-avatar";
-    avatar.textContent = role === "user" ? "Y" : "M";
-
-    const body = document.createElement("div");
-    body.className = "msg-body";
-
-    const name = document.createElement("p");
+    const name = document.createElement("span");
     name.className = "msg-name";
-    name.textContent = role === "user" ? "You" : "Mira";
+    name.textContent = role === "user" ? "Tú:" : "Mira:";
 
-    const bubble = document.createElement("p");
+    const bubble = document.createElement("span");
     bubble.className = "msg-bubble";
     bubble.textContent = text;
 
-    body.appendChild(name);
-    body.appendChild(bubble);
-    root.appendChild(avatar);
-    root.appendChild(body);
+    root.appendChild(name);
+    root.appendChild(bubble);
     ui.messages.appendChild(root);
     scrollMessagesToBottom();
     return { root, bubble };
