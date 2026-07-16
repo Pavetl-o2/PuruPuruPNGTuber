@@ -414,6 +414,23 @@
     stopSpeaking();
   });
 
+  // El iframe del avatar permanece oculto hasta que el motor confirma que el
+  // personaje está completamente cargado (evita el glitch de carga). Si el
+  // aviso no llega (p. ej. un error del motor), se muestra igual tras un margen.
+  const AVATAR_REVEAL_FALLBACK_MS = 9000;
+
+  function revealAvatar() {
+    ui.avatarFrame?.classList.add("is-ready");
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.origin !== window.location.origin) return;
+    const data = event.data;
+    if (data && typeof data === "object" && data.type === "purupuru-ready") revealAvatar();
+  });
+
+  setTimeout(revealAvatar, AVATAR_REVEAL_FALLBACK_MS);
+
   buildStars();
   resetConversation();
   ui.messageInput?.focus();

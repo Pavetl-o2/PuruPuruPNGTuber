@@ -7010,6 +7010,17 @@
     return true;
   }
 
+  // 埋め込みチャットモード: キャラ画像と設定の適用が完了したら親ページへ通知する。
+  // 親側はそれまで iframe を非表示にして、ロード中の途中状態(頭だけ・位置ズレ)を見せない。
+  function notifyEmbedReady() {
+    if (!EMBED_INPUT_POSTMESSAGE || window.parent === window) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.parent.postMessage({ type: "purupuru-ready" }, window.location.origin);
+      });
+    });
+  }
+
   // 埋め込みチャットモード: 親ページ(同一オリジン)から postMessage で音声レベルを受け取る。
   function bindEmbedVoiceInput() {
     if (!EMBED_INPUT_POSTMESSAGE) return;
@@ -14341,6 +14352,7 @@
       if (!OBS_MODE) await initializeCharacterLibraryAfterAssetsReady();
       return Promise.all([loadObsSnapshotIfAvailable(), loadObsConfigIfAvailable()]);
     })
+    .then(() => notifyEmbedReady())
     .catch((error) => {
       loadError = error instanceof Error ? error.message : String(error);
       setStatus("error");
