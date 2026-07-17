@@ -5,7 +5,7 @@
 export const config = { runtime: "edge" };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-4o-mini";
+const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_MESSAGES = 40;
 const MAX_MESSAGE_CHARS = 4000;
 

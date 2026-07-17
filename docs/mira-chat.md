@@ -24,7 +24,7 @@ en voz alta con ElevenLabs; el nivel del audio TTS alimenta el lipsync del motor
    | `OPENROUTER_API_KEY` | ✅ | API key de [OpenRouter](https://openrouter.ai/keys). |
    | `ELEVENLABS_API_KEY` | ✅ | API key de [ElevenLabs](https://elevenlabs.io). |
    | `MIRA_ACCESS_PASSWORD` | Recomendada | Contraseña de acceso. Sin ella, cualquiera con la URL puede chatear y gastar tus créditos. |
-   | `OPENROUTER_MODEL` | Opcional | Modelo a usar. Por defecto `openai/gpt-4o-mini`. |
+   | `OPENROUTER_MODEL` | Opcional | Modelo a usar. Por defecto `google/gemini-2.5-flash-lite`. |
    | `MIRA_SYSTEM_PROMPT` | Opcional | Personalidad de Mira. Hay un prompt en español por defecto. |
    | `ELEVENLABS_VOICE_ID` | Opcional | Voz de ElevenLabs. Por defecto `E4jN9siWNAz15LiK4B1G`. |
    | `ELEVENLABS_MODEL_ID` | Opcional | Modelo TTS. Por defecto `eleven_multilingual_v2`. |
