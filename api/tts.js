@@ -4,7 +4,7 @@
 
 export const config = { runtime: "edge" };
 
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel (multilingüe)
+const DEFAULT_VOICE_ID = "E4jN9siWNAz15LiK4B1G";
 const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
 const MAX_TEXT_CHARS = 1500;
 
