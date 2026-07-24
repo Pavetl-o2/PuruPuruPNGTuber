@@ -2,7 +2,7 @@
 // Vercel Edge Function: proxy hacia ElevenLabs TTS. Devuelve audio MP3 en streaming.
 // La API key vive solo en variables de entorno de Vercel; nunca llega al navegador.
 
-import { jsonResponse, accessGranted } from "./lib/http.js";
+import { jsonResponse, accessGranted } from "../lib/http.js";
 
 export const config = { runtime: "edge" };
 

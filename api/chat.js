@@ -6,9 +6,9 @@
 //      por /api/chart, saneada aquí campo a campo. Sin carta, Mira pide los datos.
 // La API key vive solo en variables de entorno de Vercel; nunca llega al navegador.
 
-import { jsonResponse, accessGranted } from "./lib/http.js";
-import { classifyTopic, refusalMessage } from "./lib/gate.js";
-import { sanitizeChart, sanitizeBirthInfo, chartToPromptText } from "./lib/chart-format.js";
+import { jsonResponse, accessGranted } from "../lib/http.js";
+import { classifyTopic, refusalMessage } from "../lib/gate.js";
+import { sanitizeChart, sanitizeBirthInfo, chartToPromptText } from "../lib/chart-format.js";
 
 export const config = { runtime: "edge" };
 

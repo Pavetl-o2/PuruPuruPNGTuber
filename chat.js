@@ -13,6 +13,8 @@
   const ACCESS_STORAGE_KEY = "miraAccessKey";
   const CHART_STORAGE_KEY = "miraChart";
   const AVATAR_REVEAL_FALLBACK_MS = 9000;
+  const PLACE_SEARCH_DEBOUNCE_MS = 550;
+  const PLACE_SEARCH_MIN_CHARS = 3;
 
   const MONTHS = [
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -59,6 +61,8 @@
   let calculating = false;
   let chatAbortController = null;
   let passwordRetry = null;
+  let placeSearchTimer = null;
+  let placeSearchToken = 0;
 
   let audioCtx = null;
   let analyser = null;
@@ -246,9 +250,37 @@
     const response = await apiFetch("/api/geocode", { query });
     const payload = await safeJson(response);
     if (!response.ok) {
-      throw new Error(payload?.error || `Error ${response.status} al buscar el lugar.`);
+      throw new Error(payload?.error || `No se pudo buscar el lugar (error ${response.status}).`);
     }
     return payload?.places || [];
+  }
+
+  // Búsqueda mientras se escribe, para que las opciones aparezcan sin pulsar "Calcular".
+  function schedulePlaceSearch() {
+    if (placeSearchTimer) clearTimeout(placeSearchTimer);
+    const query = String(ui.birthPlace?.value || "").trim();
+    if (query.length < PLACE_SEARCH_MIN_CHARS) {
+      clearPlaceResults();
+      return;
+    }
+    placeSearchTimer = setTimeout(async () => {
+      const token = ++placeSearchToken;
+      try {
+        const places = await lookupPlace(query);
+        // Descarta respuestas de búsquedas ya obsoletas.
+        if (token !== placeSearchToken) return;
+        renderPlaceResults(places);
+        setBirthStatus(places.length > 0 ? "Elige tu lugar de nacimiento en la lista." : "");
+      } catch (error) {
+        if (token !== placeSearchToken) return;
+        if (error?.code === 401) {
+          showPasswordOverlay(() => schedulePlaceSearch());
+          return;
+        }
+        clearPlaceResults();
+        setBirthStatus(error instanceof Error ? error.message : "No se pudo buscar el lugar.");
+      }
+    }, PLACE_SEARCH_DEBOUNCE_MS);
   }
 
   // ---------- Cálculo de la carta ----------
@@ -674,9 +706,10 @@
   ui.birthForm?.addEventListener("submit", handleCalculate);
 
   ui.birthPlace?.addEventListener("input", () => {
-    // Al reescribir el lugar se invalida la selección previa.
+    // Al reescribir el lugar se invalida la selección previa y se busca de nuevo.
     selectedPlace = null;
-    clearPlaceResults();
+    setBirthStatus("");
+    schedulePlaceSearch();
   });
 
   ui.unknownTime?.addEventListener("change", () => {

@@ -13,15 +13,28 @@ al modelo de conversación (ver "Harness" más abajo).
 |---|---|---|
 | `chat.html` / `chat.css` / `chat.js` | Navegador | Formulario de datos de nacimiento, panel de carta, conversación, TTS y lipsync. |
 | `index.html?mode=obs&input=postmessage&…` | Navegador (iframe) | Motor del avatar. Recibe el nivel de voz por `postMessage`. |
-| `api/geocode.js` | Node | Lugar de nacimiento → coordenadas (Nominatim / OpenStreetMap). |
+| `api/geocode.js` | Node | Lugar de nacimiento → coordenadas. |
 | `api/chart.js` | Node | Datos de nacimiento → carta natal calculada. |
 | `api/chat.js` | Edge | Compuerta de tema + interpretación anclada a la carta (OpenRouter, streaming). |
 | `api/tts.js` | Edge | Texto → voz (ElevenLabs). |
-| `api/lib/astrology.js` | Node | Cálculo de efemérides. |
-| `api/lib/chart-format.js` | Ambos | Catálogos, saneado y formateo de la carta. |
-| `api/lib/gate.js` | Edge | Clasificador de tema y negativas en personaje. |
+| `lib/astrology.js` | Node | Cálculo de efemérides. |
+| `lib/chart-format.js` | Ambos | Catálogos, saneado y formateo de la carta. |
+| `lib/gate.js` | Edge | Clasificador de tema y negativas en personaje. |
+| `lib/http.js` | Ambos | Helpers de respuesta y control de acceso. |
 
 El editor original del avatar sigue disponible en `/index.html`.
+
+### Dos detalles de Vercel que importan
+
+**La firma del handler depende del runtime.** Las funciones Edge (`api/chat.js`, `api/tts.js`)
+reciben un `Request` de la Web API y devuelven un `Response`. Las funciones Node
+(`api/chart.js`, `api/geocode.js`) reciben `(req, res)` de Node: `req.headers` es un objeto
+plano, sin `.get()`, y el cuerpo llega en `req.body`. Usar la firma equivocada provoca un
+**error 500** al primer acceso a la petición.
+
+**El código compartido vive fuera de `api/`.** Vercel convierte en endpoint cada archivo
+bajo `api/`, así que los módulos comunes están en `lib/` en la raíz. Vercel los incluye
+igualmente en el bundle porque sigue las importaciones.
 
 ## Cálculo de la carta
 
@@ -94,13 +107,19 @@ ni como predicción, y sin consejo médico, legal ni financiero.
 
 4. **Deploy**. La raíz (`/`) redirige a `/chat.html`.
 
-### Sobre Nominatim
+### Sobre la geocodificación
 
-La geocodificación usa el servicio público de OpenStreetMap, gratuito y sin API key. Su
-[política de uso](https://operations.osmfoundation.org/policies/nominatim/) pide un
-User-Agent identificable (ya incluido en `api/geocode.js`) y un máximo de una petición por
-segundo, de sobra para uso personal. Para volumen alto, conviene un proveedor de pago o una
-instancia propia.
+`api/geocode.js` consulta dos proveedores gratuitos y sin API key, en orden:
+
+1. **[Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api)** — primero porque
+   está pensado para uso programático y no limita por IP de servidor.
+2. **[Nominatim / OpenStreetMap](https://operations.osmfoundation.org/policies/nominatim/)**
+   — de reserva. Su política pide un User-Agent identificable (ya incluido) y como máximo
+   una petición por segundo; además bloquea a veces rangos de IP de proveedores cloud.
+
+Si el primero falla o no encuentra nada, se prueba el segundo; solo si fallan ambos se
+devuelve un 404 con un mensaje útil. El buscador se dispara mientras escribes (con un
+retardo de 550 ms) y las opciones duplicadas se descartan.
 
 ## Desarrollo local
 
