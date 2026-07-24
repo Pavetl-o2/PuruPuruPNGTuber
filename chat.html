@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Talk with Mira</title>
+  <title>Carta astral con Mira</title>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="vendor/fonts/zen-maru-gothic/fonts.css">
   <link rel="stylesheet" href="chat.css">
@@ -27,54 +27,101 @@
 
     <header class="top-bar">
       <div class="meta">
-        <p class="meta-row"><span class="meta-label">Companion</span><span class="meta-value">@Mira_Starling</span></p>
-        <p class="meta-row"><span class="meta-label">Frequency</span><span class="meta-value">#TalkWithMira</span></p>
+        <p class="meta-row"><span class="meta-label">Astróloga</span><span class="meta-value">@Mira_Starling</span></p>
+        <p class="meta-row"><span class="meta-label">Consulta</span><span class="meta-value">#CartaNatal</span></p>
       </div>
       <div class="plaque"><span class="plaque-text">The Starling Observatory</span></div>
     </header>
 
     <div class="layout">
-      <section class="chat-column" aria-label="Chat">
+      <section class="chat-column" aria-label="Consulta astral">
         <div class="chat-frame">
           <div class="chat-frame-head">
             <span class="head-flourish" aria-hidden="true">❦</span>
-            <h1 class="chat-frame-title">Charla</h1>
+            <h1 class="chat-frame-title" id="panelTitle">Carta Natal</h1>
             <span class="head-flourish flipped" aria-hidden="true">❦</span>
-            <button id="resetButton" class="icon-button" type="button" title="Reiniciar conversación" aria-label="Reiniciar conversación">&#8635;</button>
+            <button id="resetButton" class="icon-button" type="button" title="Nueva consulta" aria-label="Nueva consulta">&#8635;</button>
           </div>
           <div class="head-rule" aria-hidden="true"></div>
 
-          <div class="messages" id="messages" aria-live="polite"></div>
-
-          <div class="composer-card">
-            <div class="composer-meta">
-              <p class="composer-hint">Las respuestas se leen en voz alta con lipsync.</p>
-              <label class="voice-toggle">
-                <input type="checkbox" id="voiceToggle" checked>
-                <span class="voice-toggle-track" aria-hidden="true"></span>
-                <span class="voice-toggle-label">Voz</span>
+          <!-- Paso 1: datos de nacimiento -->
+          <div class="birth-panel" id="birthPanel">
+            <p class="panel-intro">
+              Para leer tu cielo necesito el instante exacto en que llegaste al mundo.
+              La hora define tu ascendente y tus casas.
+            </p>
+            <form class="birth-form" id="birthForm">
+              <label class="field">
+                <span class="field-label">Nombre <em>(opcional)</em></span>
+                <input id="birthName" class="message-input" type="text" maxlength="60" autocomplete="name" placeholder="¿Cómo te llamo?">
               </label>
-            </div>
-            <form class="composer" id="composerForm">
-              <input
-                id="messageInput"
-                class="message-input"
-                type="text"
-                placeholder="Escribe un mensaje…"
-                autocomplete="off"
-                maxlength="2000"
-              >
-              <button id="sendButton" class="send-button" type="submit" aria-label="Enviar">&#10148;</button>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field-label">Fecha de nacimiento</span>
+                  <input id="birthDate" class="message-input" type="date" required min="1800-01-01" max="2100-12-31">
+                </label>
+                <label class="field field-narrow">
+                  <span class="field-label">Hora</span>
+                  <input id="birthTime" class="message-input" type="time" required value="12:00">
+                </label>
+              </div>
+              <label class="field">
+                <span class="field-label">Lugar de nacimiento</span>
+                <input id="birthPlace" class="message-input" type="text" maxlength="120" required placeholder="Ciudad, País">
+              </label>
+              <div class="place-results" id="placeResults" hidden></div>
+              <label class="checkbox-field">
+                <input type="checkbox" id="unknownTime">
+                <span>No sé mi hora exacta (usaré las 12:00 y el ascendente quedará aproximado)</span>
+              </label>
+              <button class="send-button wide-button" id="calculateButton" type="submit">Calcular mi carta</button>
+              <p class="status-line" id="birthStatus" role="status"></p>
             </form>
-            <p class="status-line" id="statusLine" role="status"></p>
-            <p class="footnote">El audio solo se genera al responder. Tus API keys permanecen en el servidor.</p>
+          </div>
+
+          <!-- Paso 2: carta calculada + conversación -->
+          <div class="reading-panel" id="readingPanel" hidden>
+            <div class="chart-summary" id="chartSummary">
+              <button class="chart-toggle" id="chartToggle" type="button" aria-expanded="false">
+                <span class="chart-toggle-label">Tu carta</span>
+                <span class="chart-toggle-arrow" aria-hidden="true">▾</span>
+              </button>
+              <div class="chart-highlights" id="chartHighlights"></div>
+              <div class="chart-detail" id="chartDetail" hidden></div>
+            </div>
+
+            <div class="messages" id="messages" aria-live="polite"></div>
+
+            <div class="composer-card">
+              <div class="composer-meta">
+                <p class="composer-hint">Pregúntame por tu carta. Solo leo astros.</p>
+                <label class="voice-toggle">
+                  <input type="checkbox" id="voiceToggle" checked>
+                  <span class="voice-toggle-track" aria-hidden="true"></span>
+                  <span class="voice-toggle-label">Voz</span>
+                </label>
+              </div>
+              <form class="composer" id="composerForm">
+                <input
+                  id="messageInput"
+                  class="message-input"
+                  type="text"
+                  placeholder="¿Qué quieres saber de tu carta?"
+                  autocomplete="off"
+                  maxlength="2000"
+                >
+                <button id="sendButton" class="send-button" type="submit" aria-label="Enviar">&#10148;</button>
+              </form>
+              <p class="status-line" id="statusLine" role="status"></p>
+              <p class="footnote">La astrología es un lenguaje simbólico de autoconocimiento, no un diagnóstico.</p>
+            </div>
           </div>
           <div class="chat-frame-foot" aria-hidden="true">❧ ─── ❦</div>
         </div>
 
         <div class="nameplate">
           <p class="nameplate-jp">ミラ</p>
-          <p class="nameplate-en">Mira &middot; Starling Observatory</p>
+          <p class="nameplate-en">Mira &middot; Lectura de cartas</p>
         </div>
       </section>
 

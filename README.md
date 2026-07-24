@@ -186,11 +186,19 @@ Bundled demo images, favicon, screenshots, thumbnails, and other visual assets a
 
 - [使い方 / Usage](./docs/usage.md)
 
-## AIチャット / Talk with Mira (AI chat companion)
+## AI占いチャット / Astrology chat with Mira
 
-`chat.html` turns the avatar into an AI chat companion: the animated avatar (lipsync, blinking,
-hair physics) on the left and a chat panel on the right. Replies are generated via OpenRouter and
-spoken with ElevenLabs TTS, deployable on Vercel. See [docs/mira-chat.md](./docs/mira-chat.md).
+`chat.html` turns the avatar into an astrology reader: it calculates the visitor's natal chart
+and interprets it in conversation, with the animated avatar (lipsync, blinking, hair physics)
+beside an ornate consultation panel.
+
+- Chart calculation runs locally with [circular-natal-horoscope-js](https://github.com/0xStarcat/CircularNatalHoroscopeJS)
+  (Unlicense, Moshier ephemeris) — no paid astrology API.
+- Replies come from OpenRouter and are spoken with ElevenLabs TTS.
+- A topic gate keeps the bot on astrology: off-topic questions are refused in code, before
+  the conversation model is called.
+
+Deployable on Vercel. See [docs/mira-chat.md](./docs/mira-chat.md).
 
 ## 開発者向け / Development checks
 

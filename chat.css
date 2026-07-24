@@ -315,6 +315,253 @@ body {
   border-color: var(--gold);
 }
 
+/* ---------- Panel de datos de nacimiento ---------- */
+
+.birth-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+
+.birth-panel[hidden],
+.reading-panel[hidden] {
+  display: none;
+}
+
+.panel-intro {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.birth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+
+.field-row .field {
+  flex: 1;
+}
+
+.field-narrow {
+  flex: 0 0 116px !important;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.field-label em {
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+/* Los selectores de fecha/hora nativos son claros por defecto en Chrome. */
+.message-input[type="date"],
+.message-input[type="time"] {
+  color-scheme: dark;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  accent-color: var(--gold-dim);
+}
+
+.wide-button {
+  width: 100%;
+  padding: 12px 18px;
+  margin-top: 3px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.place-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--gold-dark);
+  background: var(--bg-box);
+}
+
+.place-results[hidden] {
+  display: none;
+}
+
+.place-option {
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--parchment);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.place-option:hover {
+  border-color: var(--gold-dim);
+  background: rgba(200, 162, 95, 0.09);
+}
+
+/* ---------- Panel de lectura ---------- */
+
+.reading-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-summary {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+  border: 1px solid var(--gold-dark);
+  background: var(--bg-box);
+}
+
+.chart-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--gold-dark);
+  background: transparent;
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.chart-toggle-arrow {
+  transition: transform 0.2s;
+}
+
+.chart-toggle[aria-expanded="true"] .chart-toggle-arrow {
+  transform: rotate(180deg);
+}
+
+.chart-highlights {
+  display: flex;
+}
+
+.highlight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 6px;
+  text-align: center;
+  min-width: 0;
+}
+
+.highlight + .highlight {
+  border-left: 1px solid var(--gold-dark);
+}
+
+.highlight-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.highlight-value {
+  font-size: 12.5px;
+  color: var(--gold-bright);
+}
+
+.chart-detail {
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--gold-dark);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+
+.chart-detail[hidden] {
+  display: none;
+}
+
+.detail-section + .detail-section {
+  margin-top: 11px;
+}
+
+.detail-heading {
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 2px;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.detail-key {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.detail-value {
+  color: var(--parchment);
+  text-align: right;
+}
+
 /* ---------- Mensajes ---------- */
 
 .messages {

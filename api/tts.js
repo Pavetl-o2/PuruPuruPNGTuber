@@ -2,24 +2,13 @@
 // Vercel Edge Function: proxy hacia ElevenLabs TTS. Devuelve audio MP3 en streaming.
 // La API key vive solo en variables de entorno de Vercel; nunca llega al navegador.
 
+import { jsonResponse, accessGranted } from "./lib/http.js";
+
 export const config = { runtime: "edge" };
 
 const DEFAULT_VOICE_ID = "E4jN9siWNAz15LiK4B1G";
 const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
 const MAX_TEXT_CHARS = 1500;
-
-function jsonResponse(status, payload) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
-  });
-}
-
-function accessGranted(request) {
-  const expected = (process.env.MIRA_ACCESS_PASSWORD || "").trim();
-  if (!expected) return true;
-  return (request.headers.get("x-mira-access") || "") === expected;
-}
 
 export default async function handler(request) {
   if (request.method !== "POST") {

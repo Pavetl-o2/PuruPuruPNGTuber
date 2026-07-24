@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Talk with Mira — chat con OpenRouter + voz ElevenLabs, con lipsync del avatar PuruPuru.
-// El avatar corre en un iframe (index.html?mode=obs&input=postmessage) y recibe el nivel
-// de voz por postMessage mientras suena el audio TTS.
+// Carta astral con Mira — cálculo de carta natal, lectura conversacional con
+// OpenRouter y voz ElevenLabs con lipsync del avatar PuruPuru.
+// El avatar corre en un iframe (index.html?mode=obs&input=postmessage) y recibe el
+// nivel de voz por postMessage mientras suena el audio TTS.
 
 (() => {
   "use strict";
@@ -10,14 +11,33 @@
   const VOICE_LEVEL_MAX = 1.8;
   const MAX_HISTORY_MESSAGES = 30;
   const ACCESS_STORAGE_KEY = "miraAccessKey";
-  const GREETING =
-    "¡Bienvenido a nuestro pequeño rincón entre las estrellas! Soy Mira. " +
-    "¿Quieres charlar un rato, que miremos las estrellas, o te cuento una historia?";
+  const CHART_STORAGE_KEY = "miraChart";
+  const AVATAR_REVEAL_FALLBACK_MS = 9000;
+
+  const MONTHS = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+  ];
 
   const ui = {
     sky: document.querySelector("#sky"),
     avatarFrame: document.querySelector("#avatarFrame"),
     speakingChip: document.querySelector("#speakingChip"),
+    panelTitle: document.querySelector("#panelTitle"),
+    birthPanel: document.querySelector("#birthPanel"),
+    birthForm: document.querySelector("#birthForm"),
+    birthName: document.querySelector("#birthName"),
+    birthDate: document.querySelector("#birthDate"),
+    birthTime: document.querySelector("#birthTime"),
+    birthPlace: document.querySelector("#birthPlace"),
+    placeResults: document.querySelector("#placeResults"),
+    unknownTime: document.querySelector("#unknownTime"),
+    calculateButton: document.querySelector("#calculateButton"),
+    birthStatus: document.querySelector("#birthStatus"),
+    readingPanel: document.querySelector("#readingPanel"),
+    chartToggle: document.querySelector("#chartToggle"),
+    chartHighlights: document.querySelector("#chartHighlights"),
+    chartDetail: document.querySelector("#chartDetail"),
     messages: document.querySelector("#messages"),
     composerForm: document.querySelector("#composerForm"),
     messageInput: document.querySelector("#messageInput"),
@@ -32,7 +52,11 @@
   };
 
   let messages = [];
+  let chart = null;
+  let birthInfo = null;
+  let selectedPlace = null;
   let sending = false;
+  let calculating = false;
   let chatAbortController = null;
   let passwordRetry = null;
 
@@ -69,6 +93,10 @@
 
   function setStatus(text) {
     if (ui.statusLine) ui.statusLine.textContent = text || "";
+  }
+
+  function setBirthStatus(text) {
+    if (ui.birthStatus) ui.birthStatus.textContent = text || "";
   }
 
   function scrollMessagesToBottom() {
@@ -152,6 +180,258 @@
       return await response.json();
     } catch (error) {
       return null;
+    }
+  }
+
+  // ---------- Persistencia de la carta ----------
+
+  function saveChart() {
+    try {
+      sessionStorage.setItem(CHART_STORAGE_KEY, JSON.stringify({ chart, birthInfo }));
+    } catch (error) {
+      console.warn("No se pudo guardar la carta en sessionStorage.", error);
+    }
+  }
+
+  function loadStoredChart() {
+    try {
+      const raw = sessionStorage.getItem(CHART_STORAGE_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.chart?.bodies?.length) return false;
+      chart = parsed.chart;
+      birthInfo = parsed.birthInfo || null;
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function clearStoredChart() {
+    try {
+      sessionStorage.removeItem(CHART_STORAGE_KEY);
+    } catch (error) {
+      // sessionStorage puede estar bloqueado; no es crítico.
+    }
+  }
+
+  // ---------- Geocodificación ----------
+
+  function clearPlaceResults() {
+    if (!ui.placeResults) return;
+    ui.placeResults.replaceChildren();
+    ui.placeResults.hidden = true;
+  }
+
+  function renderPlaceResults(places) {
+    if (!ui.placeResults) return;
+    ui.placeResults.replaceChildren();
+    for (const place of places) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "place-option";
+      button.textContent = place.label;
+      button.addEventListener("click", () => {
+        selectedPlace = place;
+        ui.birthPlace.value = place.label;
+        clearPlaceResults();
+        setBirthStatus("");
+      });
+      ui.placeResults.appendChild(button);
+    }
+    ui.placeResults.hidden = places.length === 0;
+  }
+
+  async function lookupPlace(query) {
+    const response = await apiFetch("/api/geocode", { query });
+    const payload = await safeJson(response);
+    if (!response.ok) {
+      throw new Error(payload?.error || `Error ${response.status} al buscar el lugar.`);
+    }
+    return payload?.places || [];
+  }
+
+  // ---------- Cálculo de la carta ----------
+
+  function formatDateLabel(dateValue, timeValue, timeUnknown) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    const monthName = MONTHS[month - 1] || month;
+    const timeLabel = timeUnknown ? "hora desconocida (se usó 12:00)" : timeValue;
+    return `${day} de ${monthName} de ${year}, ${timeLabel}`;
+  }
+
+  function renderChart() {
+    if (!chart || !ui.chartHighlights) return;
+
+    const findBody = (name) => chart.bodies.find((body) => body.name === name);
+    const ascendant = chart.angles.find((angle) => angle.name === "Ascendente");
+    const highlights = [
+      { label: "Sol", value: findBody("Sol")?.position },
+      { label: "Luna", value: findBody("Luna")?.position },
+      { label: "Ascendente", value: ascendant?.position },
+    ];
+
+    ui.chartHighlights.replaceChildren();
+    for (const item of highlights) {
+      if (!item.value) continue;
+      const cell = document.createElement("div");
+      cell.className = "highlight";
+      const label = document.createElement("span");
+      label.className = "highlight-label";
+      label.textContent = item.label;
+      const value = document.createElement("span");
+      value.className = "highlight-value";
+      value.textContent = item.value;
+      cell.appendChild(label);
+      cell.appendChild(value);
+      ui.chartHighlights.appendChild(cell);
+    }
+
+    // Detalle completo (plegable)
+    ui.chartDetail.replaceChildren();
+    const makeSection = (title, rows) => {
+      const section = document.createElement("div");
+      section.className = "detail-section";
+      const heading = document.createElement("p");
+      heading.className = "detail-heading";
+      heading.textContent = title;
+      section.appendChild(heading);
+      for (const row of rows) {
+        const line = document.createElement("p");
+        line.className = "detail-row";
+        const key = document.createElement("span");
+        key.className = "detail-key";
+        key.textContent = row.key;
+        const val = document.createElement("span");
+        val.className = "detail-value";
+        val.textContent = row.value;
+        line.appendChild(key);
+        line.appendChild(val);
+        section.appendChild(line);
+      }
+      ui.chartDetail.appendChild(section);
+    };
+
+    makeSection("Planetas", chart.bodies.map((body) => ({
+      key: body.name,
+      value: `${body.position}${body.house ? ` · casa ${body.house}` : ""}${body.retrograde ? " ℞" : ""}`,
+    })));
+    makeSection("Ángulos", chart.angles.map((angle) => ({ key: angle.name, value: angle.position })));
+    makeSection("Aspectos principales", chart.aspects.slice(0, 10).map((aspect) => ({
+      key: `${aspect.from} — ${aspect.to}`,
+      value: `${aspect.type} (${aspect.orb}°)`,
+    })));
+  }
+
+  function showReadingPanel() {
+    if (ui.birthPanel) ui.birthPanel.hidden = true;
+    if (ui.readingPanel) ui.readingPanel.hidden = false;
+    if (ui.panelTitle) ui.panelTitle.textContent = "Tu Lectura";
+    renderChart();
+  }
+
+  function showBirthPanel() {
+    if (ui.birthPanel) ui.birthPanel.hidden = false;
+    if (ui.readingPanel) ui.readingPanel.hidden = true;
+    if (ui.panelTitle) ui.panelTitle.textContent = "Carta Natal";
+  }
+
+  function greetingForChart() {
+    const sun = chart?.bodies.find((body) => body.name === "Sol");
+    const ascendant = chart?.angles.find((angle) => angle.name === "Ascendente");
+    const who = birthInfo?.name ? `${birthInfo.name}, tu` : "Tu";
+    if (sun && ascendant) {
+      return `${who} carta ya está sobre la mesa. Naciste con el Sol en ${sun.sign} y ${ascendant.sign} ascendiendo por el horizonte. `
+        + "Pregúntame por lo que quieras: tu Luna, tus casas, tus tensiones, tu vocación…";
+    }
+    return "Tu carta ya está calculada. Pregúntame por lo que quieras ver en ella.";
+  }
+
+  async function handleCalculate(event) {
+    event.preventDefault();
+    if (calculating) return;
+
+    const dateValue = ui.birthDate?.value || "";
+    const timeUnknown = Boolean(ui.unknownTime?.checked);
+    const timeValue = timeUnknown ? "12:00" : (ui.birthTime?.value || "");
+    const placeQuery = String(ui.birthPlace?.value || "").trim();
+
+    if (!dateValue) {
+      setBirthStatus("Necesito tu fecha de nacimiento.");
+      return;
+    }
+    if (!timeValue) {
+      setBirthStatus("Necesito tu hora de nacimiento (o marca que no la sabes).");
+      return;
+    }
+    if (!placeQuery) {
+      setBirthStatus("Necesito tu lugar de nacimiento.");
+      return;
+    }
+
+    calculating = true;
+    if (ui.calculateButton) ui.calculateButton.disabled = true;
+
+    try {
+      // Si el lugar escrito no coincide con el seleccionado, se vuelve a buscar.
+      if (!selectedPlace || selectedPlace.label !== placeQuery) {
+        setBirthStatus("Buscando ese lugar en el mapa…");
+        const places = await lookupPlace(placeQuery);
+        if (places.length > 1) {
+          renderPlaceResults(places);
+          setBirthStatus("Encontré varios lugares. Elige el correcto.");
+          return;
+        }
+        selectedPlace = places[0];
+      }
+      if (!selectedPlace) {
+        setBirthStatus("No encontré ese lugar. Prueba con 'Ciudad, País'.");
+        return;
+      }
+
+      setBirthStatus("Calculando las posiciones planetarias…");
+      const [year, month, day] = dateValue.split("-").map(Number);
+      const [hour, minute] = timeValue.split(":").map(Number);
+
+      const response = await apiFetch("/api/chart", {
+        birth: {
+          year, month, day, hour, minute,
+          latitude: selectedPlace.latitude,
+          longitude: selectedPlace.longitude,
+        },
+        name: String(ui.birthName?.value || "").trim(),
+        dateLabel: formatDateLabel(dateValue, timeValue, timeUnknown),
+        placeLabel: selectedPlace.label,
+      });
+      const payload = await safeJson(response);
+      if (!response.ok) {
+        setBirthStatus(payload?.error || `No se pudo calcular la carta (error ${response.status}).`);
+        return;
+      }
+
+      chart = payload.chart;
+      birthInfo = payload.birthInfo;
+      saveChart();
+      setBirthStatus("");
+      clearPlaceResults();
+
+      messages = [];
+      if (ui.messages) ui.messages.replaceChildren();
+      showReadingPanel();
+      const greeting = greetingForChart();
+      addMessageBubble("mira", greeting);
+      speak(greeting);
+      ui.messageInput?.focus();
+    } catch (error) {
+      if (error?.code === 401) {
+        showPasswordOverlay(() => handleCalculate(new Event("submit")));
+        return;
+      }
+      console.warn("chart calculation failed", error);
+      setBirthStatus(error instanceof Error ? error.message : "No se pudo calcular la carta.");
+    } finally {
+      calculating = false;
+      if (ui.calculateButton) ui.calculateButton.disabled = false;
     }
   }
 
@@ -286,7 +566,7 @@
     try {
       const response = await apiFetch(
         "/api/chat",
-        { messages: historyForRequest() },
+        { messages: historyForRequest(), chart, birthInfo },
         { signal: chatAbortController.signal }
       );
       if (!response.ok) {
@@ -372,16 +652,45 @@
     }
   }
 
-  function resetConversation() {
+  function resetConsultation() {
     if (chatAbortController) chatAbortController.abort();
     stopSpeaking();
     messages = [];
+    chart = null;
+    birthInfo = null;
+    selectedPlace = null;
+    clearStoredChart();
+    clearPlaceResults();
     if (ui.messages) ui.messages.replaceChildren();
+    if (ui.chartDetail) ui.chartDetail.hidden = true;
+    if (ui.chartToggle) ui.chartToggle.setAttribute("aria-expanded", "false");
     setStatus("");
-    addMessageBubble("mira", GREETING);
+    setBirthStatus("");
+    showBirthPanel();
   }
 
   // ---------- Eventos ----------
+
+  ui.birthForm?.addEventListener("submit", handleCalculate);
+
+  ui.birthPlace?.addEventListener("input", () => {
+    // Al reescribir el lugar se invalida la selección previa.
+    selectedPlace = null;
+    clearPlaceResults();
+  });
+
+  ui.unknownTime?.addEventListener("change", () => {
+    if (!ui.birthTime) return;
+    ui.birthTime.disabled = ui.unknownTime.checked;
+    if (ui.unknownTime.checked) ui.birthTime.value = "12:00";
+  });
+
+  ui.chartToggle?.addEventListener("click", () => {
+    if (!ui.chartDetail) return;
+    const open = ui.chartDetail.hidden;
+    ui.chartDetail.hidden = !open;
+    ui.chartToggle.setAttribute("aria-expanded", String(open));
+  });
 
   ui.composerForm?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -389,7 +698,7 @@
   });
 
   ui.resetButton?.addEventListener("click", () => {
-    resetConversation();
+    resetConsultation();
   });
 
   ui.voiceToggle?.addEventListener("change", () => {
@@ -417,8 +726,6 @@
   // El iframe del avatar permanece oculto hasta que el motor confirma que el
   // personaje está completamente cargado (evita el glitch de carga). Si el
   // aviso no llega (p. ej. un error del motor), se muestra igual tras un margen.
-  const AVATAR_REVEAL_FALLBACK_MS = 9000;
-
   function revealAvatar() {
     ui.avatarFrame?.classList.add("is-ready");
   }
@@ -432,6 +739,13 @@
   setTimeout(revealAvatar, AVATAR_REVEAL_FALLBACK_MS);
 
   buildStars();
-  resetConversation();
-  ui.messageInput?.focus();
+  if (loadStoredChart()) {
+    // Se recupera la carta de la sesión, pero la conversación empieza limpia.
+    showReadingPanel();
+    addMessageBubble("mira", greetingForChart());
+    ui.messageInput?.focus();
+  } else {
+    showBirthPanel();
+    ui.birthDate?.focus();
+  }
 })();

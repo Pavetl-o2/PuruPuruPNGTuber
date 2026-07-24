@@ -1,0 +1,11 @@
+{
+  "name": "purupuru-mira-astrology",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Serverless backend for the Mira astrology chat companion (chart calculation, topic gate, OpenRouter and ElevenLabs proxies).",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "circular-natal-horoscope-js": "^1.1.0"
+  }
+}
