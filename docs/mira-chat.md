@@ -99,7 +99,7 @@ ni como predicción, y sin consejo médico, legal ni financiero.
    | `OPENROUTER_API_KEY` | ✅ | API key de [OpenRouter](https://openrouter.ai/keys). |
    | `ELEVENLABS_API_KEY` | ✅ | API key de [ElevenLabs](https://elevenlabs.io). |
    | `MIRA_ACCESS_PASSWORD` | Recomendada | Contraseña de acceso. Sin ella, cualquiera con la URL gasta tus créditos. |
-   | `OPENROUTER_MODEL` | Opcional | Modelo de conversación. Por defecto `google/gemini-2.5-flash-lite`. |
+   | `OPENROUTER_MODEL` | Opcional | Modelo de conversación. Por defecto `deepseek/deepseek-v4-flash`. |
    | `MIRA_GATE_MODEL` | Opcional | Modelo del clasificador de tema. Por defecto, el mismo que el de conversación. |
    | `MIRA_SYSTEM_PROMPT` | Opcional | Sustituye la personalidad base. Las reglas de tema y de lectura se añaden siempre. |
    | `ELEVENLABS_VOICE_ID` | Opcional | Voz. Por defecto `E4jN9siWNAz15LiK4B1G`. |

@@ -13,7 +13,7 @@ import { sanitizeChart, sanitizeBirthInfo, chartToPromptText } from "../lib/char
 export const config = { runtime: "edge" };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "deepseek/deepseek-v4-flash";
 const MAX_MESSAGES = 40;
 const MAX_MESSAGE_CHARS = 4000;
 
