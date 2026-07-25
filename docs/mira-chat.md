@@ -135,6 +135,33 @@ con las variables definidas por `vercel env add` o un `.env.local` (nunca subirl
 El servidor local de Python (`run_local_server`) sigue siendo el flujo para **editar el
 avatar**; no sirve la página de consulta.
 
+## Móvil
+
+En pantallas de hasta 700 px la app deja de comportarse como una página con scroll y pasa a
+ocupar exactamente el alto del viewport: solo hacen scroll las zonas internas (formulario,
+mensajes, detalle de la carta). Así el campo de escritura queda siempre visible, como en una
+app nativa.
+
+Detalles que resuelve el CSS móvil:
+
+- **`dvh` en lugar de `vh`**: en iOS Safari `100vh` incluye la barra de direcciones y recorta
+  el contenido por abajo. `vh` queda como reserva para navegadores sin soporte.
+- **Campos a 16 px**: por debajo de ese tamaño, iOS hace zoom automático al enfocar un campo
+  y descuadra el layout. El esquema oscuro de los selectores de fecha y hora se aplica con la
+  propiedad CSS `color-scheme` en esos campos — **no** con un `<meta name="color-scheme">`
+  global, porque eso hace que Chrome pinte de blanco el fondo base del iframe del avatar.
+- **Objetivos táctiles de 44 px** como mínimo en botones, opciones de lugar y la fila de la
+  casilla (el `<label>` envuelve casilla y texto, así que toda la fila es pulsable).
+- **`env(safe-area-inset-*)`** para el notch y la barra inferior, con `viewport-fit=cover`.
+- **Marco ornamentado afinado**: se ocultan los medallones laterales (se solapaban con el
+  panel), la placa del nombre y el marco interior, que en pantallas estrechas solo restaban
+  espacio.
+- **Encuadre del avatar**: el motor escala el personaje al alto de su viewport, así que en
+  una franja apaisada saldría diminuto. El iframe se declara más alto y más ancho que el
+  escenario y se desplaza, de modo que el recorte deja un plano de busto centrado.
+- **Horizontal**: por debajo de 500 px de alto el avatar vuelve a un lado y la cabecera se
+  oculta, para que el formulario siga siendo usable.
+
 ## Personalización
 
 - **Avatar**: cambia `character=demo-avatar03` en el `src` del iframe de `chat.html`.

@@ -5,6 +5,11 @@
   box-sizing: border-box;
 }
 
+/* El resaltado azul al tocar rompe el tema oscuro dorado. */
+a, button, input, label, .place-option {
+  -webkit-tap-highlight-color: transparent;
+}
+
 :root {
   --bg-deep: #120d07;
   --bg-panel: rgba(13, 10, 6, 0.72);
@@ -297,10 +302,10 @@ body {
 
 .icon-button {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 6px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--gold-dim);
   background: var(--bg-box);
@@ -389,8 +394,9 @@ body {
 
 .checkbox-field {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
   font-size: 11.5px;
   line-height: 1.45;
   color: var(--muted);
@@ -399,13 +405,20 @@ body {
 
 .checkbox-field input {
   flex: 0 0 auto;
-  margin-top: 2px;
+  width: 22px;
+  height: 22px;
   accent-color: var(--gold-dim);
 }
 
-.wide-button {
+/* El objetivo táctil real es la fila completa: el <label> envuelve la casilla
+   y su texto, así que tocar cualquier punto de la fila la activa. */
+
+/* Especificidad doble a propósito: .send-button se define más abajo y, con un solo
+   nivel de clase, ganaría la cascada y anularía el padding vertical. */
+.send-button.wide-button {
   width: 100%;
-  padding: 12px 18px;
+  min-height: 48px;
+  padding: 13px 18px;
   margin-top: 3px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -427,7 +440,8 @@ body {
 }
 
 .place-option {
-  padding: 8px 10px;
+  min-height: 44px;
+  padding: 10px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--parchment);
@@ -712,6 +726,8 @@ body {
 
 .send-button {
   flex: 0 0 auto;
+  min-width: 48px;
+  min-height: 46px;
   padding: 0 18px;
   border: 1px solid var(--gold);
   border-radius: 4px;
@@ -909,56 +925,22 @@ body {
 
 /* ---------- Responsive ---------- */
 
+/* Tablet y ventanas estrechas: se apila, pero conserva el marco completo. */
 @media (max-width: 980px) {
-  .mira-app {
-    height: auto;
-    min-height: 100vh;
-    padding: 22px 18px 18px;
-  }
-
-  .top-bar {
-    padding-top: 12px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .plaque {
-    position: static;
-    transform: none;
-    margin: 0 auto;
-    padding: 5px 14px;
-    max-width: 100%;
-  }
-
-  .plaque-text {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-  }
-
-  .meta-label {
-    min-width: 70px;
-  }
-
   .layout {
     flex-direction: column;
-    height: auto;
     gap: 14px;
   }
 
   .stage {
     order: -1;
-    flex: 0 0 auto;
-    height: 44vh;
-    min-height: 300px;
+    flex: 0 0 40%;
+    min-height: 0;
   }
 
   .chat-column {
     flex: 1 1 auto;
-    height: auto;
-  }
-
-  .chat-frame {
-    min-height: 340px;
+    min-height: 0;
   }
 
   .nameplate {
@@ -967,4 +949,183 @@ body {
 
   .sparkle-1 { left: 12%; top: 12%; }
   .sparkle-2 { left: 6%; top: 30%; }
+}
+
+/* ---------- Móvil ----------
+   Se abandona el scroll de página: la app ocupa exactamente el alto del viewport
+   y solo hacen scroll las zonas internas (formulario, mensajes, detalle de carta),
+   como en una app nativa. Así el compositor queda siempre visible y el marco
+   ornamentado no se estira.
+   Se usa dvh porque en iOS Safari 100vh incluye la barra de direcciones y recorta
+   el contenido por abajo; vh queda de reserva para navegadores sin soporte. */
+@media (max-width: 700px) {
+  html,
+  body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .mira-app {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding:
+      calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right))
+      calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+  }
+
+  /* El marco se afina para no comerse el poco ancho disponible. */
+  .frame-line-outer { inset: 4px; box-shadow: inset 0 0 0 2px var(--bg-deep), inset 0 0 0 3px var(--gold-dark); }
+  .frame-line-inner { display: none; }
+  .corner { width: 22px; height: 22px; }
+  .corner::before { inset: 5px; }
+  .corner::after { inset: 9px; }
+
+  /* Los medallones laterales se solapaban con el panel de consulta. */
+  .side-medallion { display: none; }
+
+  .sparkle-1 { top: 8%; left: 8%; font-size: 22px; }
+  .sparkle-2 { top: 26%; right: 10%; left: auto; font-size: 14px; }
+  .sparkle-3,
+  .sparkle-4 { display: none; }
+
+  /* Cabecera compacta: una sola fila con la identidad y la placa. */
+  .top-bar {
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 0;
+    padding: 2px 4px 6px;
+  }
+
+  .meta-row:nth-child(2) { display: none; }
+
+  .meta-label {
+    min-width: 0;
+    padding: 1px 7px;
+    font-size: 9.5px;
+  }
+
+  .meta-value { font-size: 11px; letter-spacing: 0.06em; }
+
+  .plaque {
+    position: static;
+    transform: none;
+    padding: 4px 10px;
+    box-shadow: none;
+  }
+
+  .plaque-text { font-size: 8.5px; letter-spacing: 0.12em; }
+
+  .layout {
+    flex: 1;
+    min-height: 0;
+    gap: 8px;
+    padding: 0 2px 2px;
+  }
+
+  /* El avatar cede protagonismo al formulario, pero sigue presente. */
+  .stage {
+    flex: 0 0 31dvh;
+    min-height: 150px;
+  }
+
+  /* El motor escala el personaje al alto de su viewport, así que en una franja
+     apaisada saldría diminuto. Se le da al iframe bastante más alto que el
+     escenario y se sube: el recorte deja un encuadre de busto. */
+  .avatar-frame {
+    width: calc(100% + 270px);
+    height: 165%;
+    top: -22%;
+  }
+
+  .speaking-chip {
+    bottom: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .chat-column {
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+
+  /* La placa del nombre ocupa alto valioso y su información ya está en la cabecera. */
+  .nameplate { display: none; }
+
+  .chat-frame {
+    padding: 8px 12px 10px;
+    border-radius: 16px 16px 8px 8px;
+    box-shadow: inset 0 0 0 3px var(--bg-deep), inset 0 0 0 4px var(--gold-dark);
+  }
+
+  .chat-frame-head { padding: 0; }
+  .chat-frame-title { font-size: 15px; letter-spacing: 0.3em; text-indent: 0.3em; }
+  .head-flourish { display: none; }
+  .head-rule { margin: 4px 0 8px; height: 5px; }
+  .chat-frame-foot { display: none; }
+
+  .icon-button { top: 0; right: 0; width: 44px; height: 44px; font-size: 15px; }
+
+  .panel-intro { margin-bottom: 10px; font-size: 12.5px; }
+
+  .birth-form { gap: 9px; }
+
+  /* 16px es el umbral por debajo del cual iOS hace zoom automático al enfocar
+     un campo, lo que descuadra el layout y obliga al usuario a volver atrás. */
+  .message-input {
+    font-size: 16px;
+    min-height: 46px;
+    padding: 11px 12px;
+  }
+
+  /* A 16px, el selector nativo de hora necesita sitio para "10:40 PM" y su icono. */
+  .field-narrow { flex: 0 0 138px !important; }
+
+  .chart-detail { max-height: 34dvh; }
+
+  .messages { padding: 10px; }
+
+  .msg { font-size: 14px; }
+
+  .composer-card { padding-top: 8px; }
+
+  .composer-hint { font-size: 10.5px; }
+
+  .footnote { display: none; }
+}
+
+/* Móviles muy estrechos: se recorta lo accesorio. */
+@media (max-width: 380px) {
+  .meta { display: none; }
+  .plaque { margin: 0 auto; }
+  .chart-highlights .highlight-value { font-size: 11.5px; }
+  /* La fecha y la hora no caben juntas: se apilan. */
+  .field-row { flex-direction: column; gap: 9px; }
+  .field-narrow { flex: 1 1 auto !important; }
+}
+
+/* Móvil en horizontal: hay muy poco alto, el avatar pasa a un lado. */
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .top-bar { display: none; }
+
+  .layout {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .stage {
+    order: 1;
+    flex: 0 0 38%;
+    min-height: 0;
+  }
+
+  .avatar-frame { width: calc(100% + 120px); }
+
+  .chat-column { flex: 1; }
+
+  .panel-intro { display: none; }
 }
