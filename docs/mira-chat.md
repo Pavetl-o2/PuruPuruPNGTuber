@@ -159,6 +159,14 @@ Detalles que resuelve el CSS móvil:
 - **Encuadre del avatar**: el motor escala el personaje al alto de su viewport, así que en
   una franja apaisada saldría diminuto. El iframe se declara más alto y más ancho que el
   escenario y se desplaza, de modo que el recorte deja un plano de busto centrado.
+- **Resumen de la carta plegable**: en móvil, la fila de Sol / Luna / Ascendente se pliega
+  junto con el detalle bajo el botón "Tu carta", y ese alto se le da al avatar (38dvh en vez
+  de 31dvh). El plegado se ata al botón existente con el selector de hermano adyacente
+  `.chart-toggle[aria-expanded="true"] + .chart-highlights`, sin tocar el JS. Al desplegar la
+  carta, una regla `:has()` reduce el escenario a 24dvh y reencuadra el iframe: si el usuario
+  abre la carta es para leerla, así que el avatar cede alto y la conversación sigue legible.
+  En navegadores sin `:has()` todo funciona igual, solo con la conversación más comprimida
+  mientras la carta está abierta.
 - **Horizontal**: por debajo de 500 px de alto el avatar vuelve a un lado y la cabecera se
   oculta, para que el formulario siga siendo usable.
 

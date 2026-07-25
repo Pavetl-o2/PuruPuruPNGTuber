@@ -1026,10 +1026,27 @@ body {
     padding: 0 2px 2px;
   }
 
-  /* El avatar cede protagonismo al formulario, pero sigue presente. */
+  /* El avatar es el atractivo de la app, así que en móvil se le da todo el alto
+     que permite plegar el resumen de la carta (ver más abajo). */
   .stage {
-    flex: 0 0 31dvh;
-    min-height: 150px;
+    flex: 0 0 38dvh;
+    min-height: 170px;
+    transition: flex-basis 0.25s ease;
+  }
+
+  /* Con la carta desplegada no cabe todo: si el usuario la abre es porque quiere
+     leerla, así que el avatar cede alto y la conversación sigue siendo legible.
+     Al plegarla vuelve a su tamaño. */
+  .layout:has(.chart-toggle[aria-expanded="true"]) .stage {
+    flex-basis: 24dvh;
+    min-height: 0;
+  }
+
+  /* La franja queda más apaisada y el motor reencuadra: se recorta más arriba
+     para que siga viéndose la cara y no solo el pelo. */
+  .layout:has(.chart-toggle[aria-expanded="true"]) .avatar-frame {
+    height: 260%;
+    top: -78%;
   }
 
   /* El motor escala el personaje al alto de su viewport, así que en una franja
@@ -1085,7 +1102,19 @@ body {
   /* A 16px, el selector nativo de hora necesita sitio para "10:40 PM" y su icono. */
   .field-narrow { flex: 0 0 138px !important; }
 
-  .chart-detail { max-height: 34dvh; }
+  /* En móvil el resumen Sol/Luna/Ascendente también se pliega: en pantalla
+     pequeña robaba alto al escenario del avatar sin aportar nada que no esté
+     a un toque de distancia. El selector de hermano adyacente lo ata al mismo
+     botón que ya controla el detalle, sin tocar el JS. */
+  .chart-highlights { display: none; }
+
+  .chart-toggle[aria-expanded="true"] + .chart-highlights { display: flex; }
+
+  /* Al desplegar, el detalle no debe comerse la conversación: se limita para que
+     los mensajes conserven altura legible. No se usa min-height en .messages
+     porque en un contenedor flex de alto fijo empuja el compositor fuera de
+     pantalla; limitar el detalle deja el reparto al propio flex. */
+  .chart-detail { max-height: 17dvh; }
 
   .messages { padding: 10px; }
 
